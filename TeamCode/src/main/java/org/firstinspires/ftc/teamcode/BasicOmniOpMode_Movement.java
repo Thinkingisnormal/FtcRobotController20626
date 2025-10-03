@@ -67,6 +67,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
     // Declare OpMode members
     private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime feederTimer = new ElapsedTime();
     private DcMotor frontLeftDrive = null;
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
@@ -109,6 +110,21 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
         launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        // ########################################################################################
+        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
+        // ########################################################################################
+        // Most robots need the motors on one side to be reversed to drive forward.
+        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
+        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
+        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
+        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
+        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
+        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
+
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
          * slow down much faster when it is coasting. This creates a much more controllable
@@ -132,27 +148,23 @@ public class BasicOmniOpMode_Movement extends OpMode {
         leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        backRightDrive.setDirection(DcMotor.Direction.FORWARD);
-
-
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
     }
+
+    @Override
+    public void init_loop() {
+        //this is not needed but is here if we ever need it.
+    }
+
+    @Override
+    public void start() {
+        //this is not needed but is here if we ever need it.
+    }
+
+
     @Override
     public void loop() {
 
@@ -207,8 +219,22 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive.setPower(backLeftPower);
         backRightDrive.setPower(backRightPower);
 
+        //for adjusting shooting power (only two options rn)
+        if (gamepad1.triangle) {
+            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
+        } else if (gamepad1.cross) { //stop the thang from shooting
+            launcher.setVelocity(STOP_SPEED);
+        }
+
+        //press right trigger to shoot.
+        launch(gamepad1.rightBumperWasPressed());
+
+
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
+
+        telemetry.addData("State", launchState);
+        telemetry.addData("motorSpeed", launcher.getVelocity());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
         telemetry.update();
@@ -216,9 +242,39 @@ public class BasicOmniOpMode_Movement extends OpMode {
     }
 
 
+    void launch(boolean shotRequested) {
+        switch (launchState) {
+            case IDLE:
+                if (shotRequested) {
+                    launchState = LaunchState.SPIN_UP;
+                }
+                break;
+            case SPIN_UP:
+                launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
+                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
+                    launchState = LaunchState.LAUNCH;
+                }
+                break;
+            case LAUNCH:
+                leftFeeder.setPower(FULL_SPEED);
+                rightFeeder.setPower(FULL_SPEED);
+                feederTimer.reset();
+                launchState = LaunchState.LAUNCHING;
+                break;
+            case LAUNCHING:
+                if (feederTimer.seconds() > FEED_TIME_SECONDS) {
+                    launchState = LaunchState.IDLE;
+                    leftFeeder.setPower(STOP_SPEED);
+                    rightFeeder.setPower(STOP_SPEED);
+                }
+                break;
+        }
+
+
 
 
 
 
 
     }
+}
