@@ -29,44 +29,41 @@
 
 package org.firstinspires.ftc.teamcode;
 
+//def of "BRAKE" The motor stops and then floats: an external force attempting to turn the motor is not met with active resistence.
+import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
+
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
- * This file contains an example of a Linear "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When a selection is made from the menu, the corresponding OpMode is executed.
- *
- * This particular OpMode illustrates driving a 4-motor Omni-Directional (or Holonomic) robot.
- * This code will work with either a Mecanum-Drive or an X-Drive train.
- * Both of these drives are illustrated at https://gm0.org/en/latest/docs/robot-design/drivetrains/holonomic.html
- * Note that a Mecanum drive must display an X roller-pattern when viewed from above.
- *
- * Also note that it is critical to set the correct rotation direction for each motor.  See details below.
- *
- * Holonomic drives provide the ability for the robot to move in three axes (directions) simultaneously.
- * Each motion axis is controlled by one Joystick axis.
- *
  * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
  * 2) Lateral:  Strafing right and left                     Left-joystick Right and Left
  * 3) Yaw:      Rotating Clockwise and counter clockwise    Right-joystick Right and Left
- *
- * This code is written assuming that the right-side motors need to be reversed for the robot to drive forward.
  * When you first test your robot, if it moves backward when you push the left stick forward, then you must flip
  * the direction of all 4 motors (see code below).
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
+*/
 
 @TeleOp(name="Basic: Omni OpMode", group="Linear OpMode")
 
 public class BasicOmniOpMode_Movement extends OpMode {
+
+    // for feeders:
+    final double FEED_TIME_SECONDS = 0.20; //The feeder servos run this long when a shot is requested.
+    final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
+    final double FULL_SPEED = 1.0;
+
+
+    //for launcher encoders.
+    final double LAUNCHER_TARGET_VELOCITY = 1125;
+    final double LAUNCHER_MIN_VELOCITY = 1075; //min velocity threshold to determine when to fire
+
 
     // Declare OpMode members
     private ElapsedTime runtime = new ElapsedTime();
@@ -74,6 +71,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
+    private DcMotorEx launcher = null;
+    private CRServo leftFeeder = null;
+    private CRServo rightFeeder = null;
 
 
     //state machine to "control our launcher motor and feeder servos in this program." The core advantage of
@@ -89,9 +89,11 @@ public class BasicOmniOpMode_Movement extends OpMode {
     }
     private LaunchState launchState;
 
+
+
     @Override
     public void init() {
-
+        launchState = LaunchState.IDLE;
 
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
@@ -101,6 +103,34 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive = hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
+        launcher = hardwareMap.get(DcMotorEx.class, "launcher");
+        leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
+        rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
+
+        launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        /*
+         * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
+         * slow down much faster when it is coasting. This creates a much more controllable
+         * drivetrain. As the robot stops much quicker.
+         */
+        frontLeftDrive.setZeroPowerBehavior(BRAKE);
+        backLeftDrive.setZeroPowerBehavior(BRAKE);
+        frontRightDrive.setZeroPowerBehavior(BRAKE);
+        backRightDrive.setZeroPowerBehavior(BRAKE);
+        launcher.setZeroPowerBehavior(BRAKE);
+
+        /*
+         * set Feeders to an initial value to initialize the servo controller
+         */
+        leftFeeder.setPower(STOP_SPEED);
+        rightFeeder.setPower(STOP_SPEED);
+
+        //got this from starter bot code example
+        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
+
+        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -125,7 +155,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
     }
     @Override
     public void loop() {
-        double max;
+
 
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
         double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
@@ -139,6 +169,8 @@ public class BasicOmniOpMode_Movement extends OpMode {
         double backLeftPower   = axial - lateral + yaw;
         double backRightPower  = axial + lateral - yaw;
 
+
+        double max;
         // Normalize the values so no wheel power exceeds 100%
         // This ensures that the robot maintains the desired motion.
         max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
