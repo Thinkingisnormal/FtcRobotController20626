@@ -234,6 +234,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
         telemetry.addData("Status", "Run Time: " + runtime.toString());
 
         telemetry.addData("State", launchState);
+        telemetry.addData("Has launcher hit target velocity?", telLaunch);
         telemetry.addData("motorSpeed", launcher.getVelocity());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
@@ -241,7 +242,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
     }
 
-
+    boolean telLaunch = false;
     void launch(boolean shotRequested) {
         switch (launchState) {
             case IDLE:
@@ -256,6 +257,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
                 }
                 break;
             case LAUNCH:
+                telLaunch = true;
                 leftFeeder.setPower(FULL_SPEED);
                 rightFeeder.setPower(FULL_SPEED);
                 feederTimer.reset();
