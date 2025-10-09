@@ -54,9 +54,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class BasicOmniOpMode_Movement extends OpMode {
 
+    // for feeders:
+    final double FEED_TIME_SECONDS = 0.20; //The feeder servos run this long when a shot is requested.
+    final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
+    final double FULL_SPEED = 1.0;
 
 
-    //for launcher encoders. (dont know if this works)
+    //for launcher encoders.
     final double LAUNCHER_TARGET_VELOCITY = 1125;
     final double LAUNCHER_MIN_VELOCITY = 1075; //min velocity threshold to determine when to fire
 
@@ -87,11 +91,6 @@ public class BasicOmniOpMode_Movement extends OpMode {
     private LaunchState launchState;
 
 
-    //for feeders:
-    final double FEED_TIME_SECONDS = 0.10; //The feeder servos run this long when a shot is requested.
-    final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
-    final double HALF_SPEED = 0.7;
-    final double FULL_SPEED = 1.0;
 
     @Override
     public void init() {
@@ -108,7 +107,6 @@ public class BasicOmniOpMode_Movement extends OpMode {
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
         leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
         rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
-
 
         launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
@@ -221,9 +219,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive.setPower(backLeftPower);
         backRightDrive.setPower(backRightPower);
 
-        //for adjusting shooting power WITHOUT actually shooting it (only two options rn)
+        //for adjusting shooting power (only two options rn)
         if (gamepad1.triangle) {
-            leftFeeder.setPower(HALF_SPEED);
+            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
         } else if (gamepad1.cross) { //stop the thang from shooting
             launcher.setVelocity(STOP_SPEED);
         }
@@ -236,9 +234,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
         telemetry.addData("Status", "Run Time: " + runtime.toString());
 
         telemetry.addData("State", launchState);
-        telemetry.addData("launcherSpeed", launcher.getVelocity());
+        telemetry.addData("motorSpeed", launcher.getVelocity());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
-        telemetry.addData("Back left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+        telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
         telemetry.update();
 
     }
