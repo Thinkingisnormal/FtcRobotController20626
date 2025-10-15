@@ -145,7 +145,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
         //got this from starter bot code example
         launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
 
-        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
+
 
 
         // Wait for the game to start (driver presses START)
