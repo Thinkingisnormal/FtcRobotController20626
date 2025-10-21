@@ -55,7 +55,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class BasicOmniOpMode_Movement extends OpMode {
 
     // for feeders:
-    final double FEED_TIME_SECONDS = 0.20; //The feeder servos run this long when a shot is requested.
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
     final double FULL_SPEED = 1.0;
 
@@ -66,9 +65,17 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
 
     // Declare OpMode members
+
+    //timers
+    final double FEED_TIME_SECONDS = 0.2; //The feeder servos run this long when a shot is requested.
+    final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
     private ElapsedTime runtime = new ElapsedTime();
     private ElapsedTime feederTimer = new ElapsedTime();
-    private DcMotor frontLeftDrive = null;
+    private ElapsedTime launcherTimer = new ElapsedTime();
+
+
+
+    private DcMotor frontLeftDrive= null;
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
@@ -88,9 +95,8 @@ public class BasicOmniOpMode_Movement extends OpMode {
         LAUNCH,
         LAUNCHING,
     }
+
     private LaunchState launchState;
-
-
 
     @Override
     public void init() {
@@ -120,8 +126,8 @@ public class BasicOmniOpMode_Movement extends OpMode {
         // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
         // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
         // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
@@ -146,7 +152,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
         launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
 
         leftFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
 
@@ -172,9 +178,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
 
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+        double axial   =  gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
         double lateral =  gamepad1.left_stick_x;
-        double yaw     =  gamepad1.right_stick_x;
+        double yaw     =  -gamepad1.right_stick_x;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -225,7 +231,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
         if (gamepad1.triangle) {
             launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
         } else if (gamepad1.cross) { //stop the thang from shooting
-            launcher.setVelocity(STOP_SPEED);
+            launcher.setVelocity(0);
         }
 
         //press right trigger to shoot.
@@ -234,18 +240,17 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-
         telemetry.addData("State", launchState);
-        telemetry.addData("Has launcher hit target velocity?", telLaunch);
+        telemetry.addData("FeederPower:", leftFeeder.getPower());
         telemetry.addData("motorSpeed", launcher.getVelocity());
+        telemetry.addData("Feeder timer (should stop  when hits 0.10:", feederTimer.seconds());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
         telemetry.update();
 
     }
 
-    boolean telLaunch = false;
-    void launch(boolean shotRequested) {
+      void launch(boolean shotRequested) {
         switch (launchState) {
             case IDLE:
                 if (shotRequested) {
@@ -254,15 +259,17 @@ public class BasicOmniOpMode_Movement extends OpMode {
                 break;
             case SPIN_UP:
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
-                    launchState = LaunchState.LAUNCH;
+                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) { //changed min to target
+                    launcherTimer.reset();
+                    if (launcherTimer.seconds() > TIME_BEFORE_LAUNCH) {
+                        launchState = LaunchState.LAUNCH;
+                    }
                 }
                 break;
             case LAUNCH:
-                telLaunch = true;
                 leftFeeder.setPower(FULL_SPEED);
                 rightFeeder.setPower(FULL_SPEED);
-                feederTimer.reset();
+                feederTimer.reset(); //starts timer
                 launchState = LaunchState.LAUNCHING;
                 break;
             case LAUNCHING:
@@ -273,12 +280,6 @@ public class BasicOmniOpMode_Movement extends OpMode {
                 }
                 break;
         }
-
-
-
-
-
-
 
     }
 }
