@@ -61,7 +61,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
     //for launcher encoders.
     final double LAUNCHER_TARGET_VELOCITY = 1125;
-    final double LAUNCHER_MIN_VELOCITY = 1100;
+    final double LAUNCHER_MIN_VELOCITY = 1075;
 
 
     // Declare OpMode members
