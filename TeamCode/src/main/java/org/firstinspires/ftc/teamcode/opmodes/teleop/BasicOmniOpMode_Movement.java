@@ -33,6 +33,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -50,8 +51,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * the direction of all 4 motors (see code below).
 */
 
-@TeleOp(name="Basic: Omni OpMode", group="Linear OpMode")
 
+@TeleOp(name="Basic: Omni OpMode", group="Linear OpMode")
+@Disabled // to stop this class from appearing in the Op modes in driver hub
 public class BasicOmniOpMode_Movement extends OpMode {
 
     // for feeders:
