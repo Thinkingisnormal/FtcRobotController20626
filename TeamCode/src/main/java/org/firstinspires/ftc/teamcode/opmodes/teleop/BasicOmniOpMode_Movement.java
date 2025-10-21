@@ -55,19 +55,26 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class BasicOmniOpMode_Movement extends OpMode {
 
     // for feeders:
-    final double FEED_TIME_SECONDS = 5; //The feeder servos run this long when a shot is requested.
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
     final double FULL_SPEED = 1.0;
 
 
     //for launcher encoders.
     final double LAUNCHER_TARGET_VELOCITY = 1125;
-    final double LAUNCHER_MIN_VELOCITY = 1075; //min velocity threshold to determine when to fire
+    final double LAUNCHER_MIN_VELOCITY = 1100;
 
 
     // Declare OpMode members
+
+    //timers
+    final double FEED_TIME_SECONDS = 0.2; //The feeder servos run this long when a shot is requested.
+    final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
     private ElapsedTime runtime = new ElapsedTime();
     private ElapsedTime feederTimer = new ElapsedTime();
+    private ElapsedTime launcherTimer = new ElapsedTime();
+
+
+
     private DcMotor frontLeftDrive= null;
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
@@ -144,7 +151,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
         //got this from starter bot code example
         launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
 
-        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        leftFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        rightFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
 
         // Wait for the game to start (driver presses START)
@@ -171,7 +180,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
         double axial   =  gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
         double lateral =  gamepad1.left_stick_x;
-        double yaw     =  gamepad1.right_stick_x;
+        double yaw     =  -gamepad1.right_stick_x;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -220,11 +229,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
         //for adjusting shooting power (only two options rn)
         if (gamepad1.triangle) {
-            rightFeeder.setPower(FULL_SPEED);
-            leftFeeder.setPower(FULL_SPEED);
+            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
         } else if (gamepad1.cross) { //stop the thang from shooting
-            rightFeeder.setPower(STOP_SPEED);
-            leftFeeder.setPower(STOP_SPEED);
+            launcher.setVelocity(0);
         }
 
         //press right trigger to shoot.
@@ -243,7 +250,6 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
     }
 
-
       void launch(boolean shotRequested) {
         switch (launchState) {
             case IDLE:
@@ -253,8 +259,11 @@ public class BasicOmniOpMode_Movement extends OpMode {
                 break;
             case SPIN_UP:
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) {
-                    launchState = LaunchState.LAUNCH;
+                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) { //changed min to target
+                    launcherTimer.reset();
+                    if (launcherTimer.seconds() > TIME_BEFORE_LAUNCH) {
+                        launchState = LaunchState.LAUNCH;
+                    }
                 }
                 break;
             case LAUNCH:
