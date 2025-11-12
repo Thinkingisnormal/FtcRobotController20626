@@ -1,150 +1,143 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.*;
+
+
+import com.google.blocks.ftcrobotcontroller.runtime.*;
 import com.qualcomm.hardware.limelightvision.*;
-import com.qualcomm.hardware.limelightvision.LLResultTypes.*;
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
+import org.firstinspires.ftc.robotcore.external.navigation.*;
+
+
 import java.util.List;
 
-@Autonomous(name = "LimeLight Auto", group = "Vision")
-public class LimeLight extends LinearOpMode {
+public class LimeLight {
 
-    private Limelight3A limelight;
-    private BNO055IMU imu;
+    Limelight3A limelight;
 
     @Override
-    public void runOpMode() throws InterruptedException {
-        // --- Initialize Limelight and IMU ---
+    public void init() {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
+        limelight.start(); // This tells Limelight to start looking!
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        imu.initialize(parameters);
+        limelight.pipelineSwitch(0); // Switch to pipeline number 0
 
-        limelight.setPollRateHz(100);
-        limelight.start();
-        limelight.pipelineSwitch(0);
+        result.getPipelineIndex();
 
-        telemetry.addLine("Limelight initialized — waiting for start...");
-        telemetry.update();
-
-        waitForStart();
-
-        //Main autonomous vision logic
         LLResult result = limelight.getLatestResult();
-
         if (result != null && result.isValid()) {
-            telemetry.addData("Pipeline", result.getPipelineIndex());
-
-            double tx = result.getTx();
-            double ty = result.getTy();
-            double ta = result.getTa();
+            double tx = result.getTx(); // How far left or right the target is (degrees)
+            double ty = result.getTy(); // How far up or down the target is (degrees)
+            double ta = result.getTa(); // How big the target looks (0%-100% of the image)
 
             telemetry.addData("Target X", tx);
             telemetry.addData("Target Y", ty);
             telemetry.addData("Target Area", ta);
-
-            // Example: Use tx to align the robot
-            if (tx < -5) {
-                telemetry.addLine("Target is left — turn left");
-                // yourMotorControlMethod(-0.3, 0.3);
-            } else if (tx > 5) {
-                telemetry.addLine("Target is right — turn right");
-                // yourMotorControlMethod(0.3, -0.3);
-            } else {
-                telemetry.addLine("Target centered — move forward");
-                // yourMotorControlMethod(0.4, 0.4);
-            }
-
-            //Python integration
-            double[] inputs = {1.0, 2.0, 3.0, 4.0};
-            limelight.updatePythonInputs(inputs);
-
-            double[] pythonOutputs = result.getPythonOutput();
-            if (pythonOutputs != null && pythonOutputs.length > 0) {
-                telemetry.addData("Python output[0]", pythonOutputs[0]);
-            }
-
-            //Pose estimation
-            Pose3D botpose = result.getBotpose();
-            if (botpose != null) {
-                telemetry.addData("BotPose MT1", "(%.2f, %.2f)",
-                        botpose.getPosition().x, botpose.getPosition().y);
-            }
-
-            double robotYaw = imu.getAngularOrientation().firstAngle;
-            limelight.updateRobotOrientation(robotYaw);
-
-            Pose3D botpose_mt2 = result.getBotpose_MT2();
-            if (botpose_mt2 != null) {
-                telemetry.addData("BotPose MT2", "(%.2f, %.2f)",
-                        botpose_mt2.getPosition().x, botpose_mt2.getPosition().y);
-            }
-
-            //Fiducials (AprilTags)
-            List<FiducialResult> fiducials = result.getFiducialResults();
-            for (FiducialResult fiducial : fiducials) {
-                int id = fiducial.getFiducialId();
-                double fx = fiducial.getTargetXDegrees();
-                double fy = fiducial.getTargetYDegrees();
-                double distance = fiducial.getRobotPoseTargetSpace().getY();
-                telemetry.addData("Fiducial " + id,
-                        String.format("X: %.1f Y: %.1f Dist: %.2f m", fx, fy, distance));
-            }
-
-            //Color Results
-            List<ColorResult> colorTargets = result.getColorResults();
-            for (ColorResult colorTarget : colorTargets) {
-                telemetry.addData("Color Target",
-                        String.format("X: %.1f Y: %.1f Area: %.1f%%",
-                                colorTarget.getTargetXDegrees(),
-                                colorTarget.getTargetYDegrees(),
-                                colorTarget.getTargetArea()));
-            }
-
-            //Scan Results
-            List<BarcodeResult> barcodes = result.getBarcodeResults();
-            for (BarcodeResult barcode : barcodes) {
-                telemetry.addData("Barcode", barcode.getData() + " (" + barcode.getFamily() + ")");
-            }
-
-            //Classifier Results
-            List<ClassifierResult> classifications = result.getClassifierResults();
-            for (ClassifierResult classification : classifications) {
-                telemetry.addData("Classifier",
-                        classification.getClassName() + " (" + classification.getConfidence() + "%)");
-            }
-
-            //Detector Results
-            List<DetectorResult> detections = result.getDetectorResults();
-            for (DetectorResult detection : detections) {
-                telemetry.addData("Detector",
-                        detection.getClassName() + String.format(" (%.1f, %.1f)°",
-                                detection.getTargetXDegrees(), detection.getTargetYDegrees()));
-            }
-
-            //Staleness check
-            long staleness = result.getStaleness();
-            telemetry.addData("Data Age (ms)", staleness);
-            telemetry.addData("Data Status", (staleness < 100) ? "Fresh" : "Old");
-
-            //Field map upload example
-            LLFieldMap fieldMap = new LLFieldMap();
-            boolean success = limelight.uploadFieldmap(fieldMap, null);
-            telemetry.addData("Field Map Upload", success ? "Success" : "Failed");
-
-            //Snapshot
-            limelight.captureSnapshot("auto_snapshot");
         } else {
-            telemetry.addData("Limelight", "No targets detected!");
+            telemetry.addData("Limelight", "No Targets");
         }
 
-        telemetry.update();
+        // Sending numbers to Python
+        double[] inputs = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
+        limelight.updatePythonInputs(inputs);
 
-        //Optional cleanup
+        // Getting numbers from Python
+        double[] pythonOutputs = result.getPythonOutput();
+        if (pythonOutputs != null && pythonOutputs.length > 0) {
+            double firstOutput = pythonOutputs[0];
+            telemetry.addData("Python output:", firstOutput);
+        }
+
+        if (result != null && result.isValid()) {
+            Pose3D botpose = result.getBotpose();
+            if (botpose != null) {
+                double x = botpose.getPosition().x;
+                double y = botpose.getPosition().y;
+                telemetry.addData("MT1 Location", "(" + x + ", " + y + ")");
+            }
+        }
+
+        // First, tell Limelight which way your robot is facing
+        BNO055IMUAccess imu; //Im not 100% sure about this part
+        double robotYaw = imu.getAngularOrientation().firstAngle;
+        limelight.updateRobotOrientation(robotYaw);
+        if (result != null && result.isValid()) {
+            Pose3D botpose_mt2 = result.getBotpose_MT2();
+            if (botpose_mt2 != null) {
+                double x = botpose_mt2.getPosition().x;
+                double y = botpose_mt2.getPosition().y;
+                telemetry.addData("MT2 Location:", "(" + x + ", " + y + ")");
+            }
+        }
+
+        List<LLResultTypes.ColorResult> colorTargets = result.getColorResults();
+        LLResultTypes.DetectorResult detection;
+        for (LLResultTypes.ColorResult colorTarget : colorTargets) {
+            double x = detection.getTargetXDegrees(); // Where it is (left-right)
+            double y = detection.getTargetYDegrees(); // Where it is (up-down)
+            double area = colorTarget.getTargetArea(); // size (0-100)
+            telemetry.addData("Color Target", "takes up " + area + "% of the image");
+        }
+
+        List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
+        for (LLResultTypes.FiducialResult fiducial : fiducials) {
+            int id = fiducial.getFiducialId(); // The ID number of the fiducial
+            double x = detection.getTargetXDegrees(); // Where it is (left-right)
+            double y = detection.getTargetYDegrees(); // Where it is (up-down)
+            double StrafeDistance_3D = fiducial.getRobotPoseTargetSpace().getY();
+            telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
+        }
+
+
+
+        LLResultTypes.FiducialResult fiducial;
+        fiducial.getRobotPoseTargetSpace(); // Robot pose relative it the AprilTag Coordinate System (Most Useful)
+        fiducial.getCameraPoseTargetSpace(); // Camera pose relative to the AprilTag (useful)
+        fiducial.getRobotPoseFieldSpace(); // Robot pose in the field coordinate system based on this tag alone (useful)
+        fiducial.getTargetPoseCameraSpace(); // AprilTag pose in the camera's coordinate system (not very useful)
+        fiducial.getTargetPoseRobotSpace(); // AprilTag pose in the robot's coordinate system (not very useful)
+
+        List<LLResultTypes.BarcodeResult> barcodes = result.getBarcodeResults();
+        for (LLResultTypes.BarcodeResult barcode : barcodes) {
+            String data = barcode.getData(); // What the barcode says
+            String family = barcode.getFamily(); // What type of barcode it is
+            telemetry.addData("Barcode", data + " (" + family + ")");
+        }
+
+        List<LLResultTypes.ClassifierResult> classifications = result.getClassifierResults();
+        for (LLResultTypes.ClassifierResult classification : classifications) {
+            String className = classification.getClassName(); // What Limelight thinks it sees
+            double confidence = classification.getConfidence(); // Confidence Score
+            telemetry.addData("I see a", className + " (" + confidence + "%)");
+        }
+
+        List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+        for (LLResultTypes.DetectorResult detection : detections) {
+            String className = detection.getClassName(); // What was detected
+            double x = detection.getTargetXDegrees(); // Where it is (left-right)
+            double y = detection.getTargetYDegrees(); // Where it is (up-down)
+            telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
+        }
+
+        long staleness = result.getStaleness();
+        if (staleness < 100) { // Less than 100 milliseconds old
+            telemetry.addData("Data", "Good");
+        } else {
+            telemetry.addData("Data", "Old (" + staleness + " ms)");
+        }
+
+        LLFieldMap fieldMap = new LLFieldMap(); // You'll need to fill this with field data
+        boolean success = limelight.uploadFieldmap(fieldMap, null); // null means use the default slot
+        if (success) {
+            telemetry.addData("Field Map", "Uploaded successfully!");
+        } else {
+            telemetry.addData("Field Map", "Oops, upload failed");
+        }
+
+        limelight.captureSnapshot("auto_pov_10s");
+
         limelight.deleteSnapshots();
+        telemetry.addData("Snapshots", "All cleared out!");
     }
 }
