@@ -5,11 +5,12 @@ import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.*;
 
 import com.google.blocks.ftcrobotcontroller.runtime.*;
 import com.qualcomm.hardware.limelightvision.*;
+import com.qualcomm.robotcore.hardware.*;
 
 import org.firstinspires.ftc.robotcore.external.navigation.*;
 
 
-import java.util.List;
+import java.util.*;
 
 public class LimeLight {
 
@@ -23,9 +24,10 @@ public class LimeLight {
 
         limelight.pipelineSwitch(0); // Switch to pipeline number 0
 
+        LLResult result = null;
         result.getPipelineIndex();
 
-        LLResult result = limelight.getLatestResult();
+        result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
             double tx = result.getTx(); // How far left or right the target is (degrees)
             double ty = result.getTy(); // How far up or down the target is (degrees)
@@ -59,8 +61,8 @@ public class LimeLight {
         }
 
         // First, tell Limelight which way your robot is facing
-        BNO055IMUAccess imu; //Im not 100% sure about this part
-        double robotYaw = imu.getAngularOrientation().firstAngle;
+        IMU imu = hardwareMap.get(IMU.class, "limelight");
+        double robotYaw = imu.getRobotOrientation().firstAngle;
         limelight.updateRobotOrientation(robotYaw);
         if (result != null && result.isValid()) {
             Pose3D botpose_mt2 = result.getBotpose_MT2();
@@ -85,10 +87,10 @@ public class LimeLight {
             int id = fiducial.getFiducialId(); // The ID number of the fiducial
             double x = detection.getTargetXDegrees(); // Where it is (left-right)
             double y = detection.getTargetYDegrees(); // Where it is (up-down)
-            double StrafeDistance_3D = fiducial.getRobotPoseTargetSpace().getY();
-            telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
+            double StrafeDistance_3D;
+            StrafeDistance_3D = fiducial.getRobotPoseTargetSpace().getPosition().y;();
+            telemetry.addData("Fiducial " + id, "is " + x + " meters away");
         }
-
 
 
         LLResultTypes.FiducialResult fiducial;
@@ -113,7 +115,7 @@ public class LimeLight {
         }
 
         List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
-        for (LLResultTypes.DetectorResult detection : detections) {
+        for (detections) {
             String className = detection.getClassName(); // What was detected
             double x = detection.getTargetXDegrees(); // Where it is (left-right)
             double y = detection.getTargetYDegrees(); // Where it is (up-down)
