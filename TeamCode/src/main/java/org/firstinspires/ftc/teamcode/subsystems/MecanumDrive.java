@@ -81,7 +81,7 @@ public class MecanumDrive {
     operations required for a field oriented drive
 
      */
-    public void fieldRelativeDrive (double axial, double lateral, double yaw){
+    public void fieldRelativeDrive(double axial, double lateral, double yaw){
         double theta = Math.atan2(axial, lateral);
         double r = Math.hypot(axial, lateral);
 
