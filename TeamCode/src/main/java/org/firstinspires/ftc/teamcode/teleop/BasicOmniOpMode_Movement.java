@@ -23,7 +23,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 */
 
 
-@TeleOp(name="Basic: Omni OpMode", group="Linear OpMode")
+@TeleOp(name="Basic: Omni OpMode(robot centric", group="Linear OpMode")
 
 public class BasicOmniOpMode_Movement extends OpMode {
 
@@ -89,16 +89,6 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
         launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
         frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
@@ -207,20 +197,19 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
     }
 
-      void launch(boolean shotRequested) {
+      public void launch(boolean shotRequested) {
         switch (launchState) {
             case IDLE:
                 if (shotRequested) {
                     launchState = LaunchState.SPIN_UP;
+                    launcherTimer.reset();
                 }
                 break;
             case SPIN_UP:
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) { //changed min to target
-                    launcherTimer.reset();
-                    if (launcherTimer.seconds() > TIME_BEFORE_LAUNCH) {
+                if (launcher.getVelocity() >= LAUNCHER_TARGET_VELOCITY &&
+                        launcherTimer.seconds() > TIME_BEFORE_LAUNCH) { //changed min to target
                         launchState = LaunchState.LAUNCH;
-                    }
                 }
                 break;
             case LAUNCH:
