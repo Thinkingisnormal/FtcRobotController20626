@@ -1,21 +1,18 @@
 package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.*;
-
-
-import com.google.blocks.ftcrobotcontroller.runtime.*;
-import com.qualcomm.hardware.limelightvision.*;
-import com.qualcomm.robotcore.hardware.*;
-
-import org.firstinspires.ftc.robotcore.external.navigation.*;
-
-
-import java.util.*;
+import com.qualcomm.hardware.limelightvision.LLFieldMap;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.robotcore.hardware.IMU;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import java.util.List;
 
 public class LimeLight {
 
     Limelight3A limelight;
-
     @Override
     public void init() {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -24,10 +21,7 @@ public class LimeLight {
 
         limelight.pipelineSwitch(0); // Switch to pipeline number 0
 
-        LLResult result = null;
-        result.getPipelineIndex();
-
-        result = limelight.getLatestResult();
+        LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
             double tx = result.getTx(); // How far left or right the target is (degrees)
             double ty = result.getTy(); // How far up or down the target is (degrees)
@@ -45,26 +39,27 @@ public class LimeLight {
         limelight.updatePythonInputs(inputs);
 
         // Getting numbers from Python
+        assert result != null;
         double[] pythonOutputs = result.getPythonOutput();
         if (pythonOutputs != null && pythonOutputs.length > 0) {
             double firstOutput = pythonOutputs[0];
             telemetry.addData("Python output:", firstOutput);
         }
 
-        if (result != null && result.isValid()) {
-            Pose3D botpose = result.getBotpose();
-            if (botpose != null) {
-                double x = botpose.getPosition().x;
-                double y = botpose.getPosition().y;
+        if (result.isValid()) {
+            Pose3D botPose = result.getBotpose();
+            if (botPose != null) {
+                double x = botPose.getPosition().x;
+                double y = botPose.getPosition().y;
                 telemetry.addData("MT1 Location", "(" + x + ", " + y + ")");
             }
         }
 
         // First, tell Limelight which way your robot is facing
-        IMU imu = hardwareMap.get(IMU.class, "limelight");
-        double robotYaw = imu.getRobotOrientation().firstAngle;
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+        double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         limelight.updateRobotOrientation(robotYaw);
-        if (result != null && result.isValid()) {
+        if (result.isValid()) {
             Pose3D botpose_mt2 = result.getBotpose_MT2();
             if (botpose_mt2 != null) {
                 double x = botpose_mt2.getPosition().x;
@@ -74,7 +69,7 @@ public class LimeLight {
         }
 
         List<LLResultTypes.ColorResult> colorTargets = result.getColorResults();
-        LLResultTypes.DetectorResult detection;
+        LLResultTypes.DetectorResult detection = (LLResultTypes.DetectorResult) result.getDetectorResults();
         for (LLResultTypes.ColorResult colorTarget : colorTargets) {
             double x = detection.getTargetXDegrees(); // Where it is (left-right)
             double y = detection.getTargetYDegrees(); // Where it is (up-down)
@@ -84,21 +79,17 @@ public class LimeLight {
 
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
         for (LLResultTypes.FiducialResult fiducial : fiducials) {
+
+            Pose3D robotPoseTarget = fiducial.getRobotPoseTargetSpace(); // Robot pose relative it the AprilTag Coordinate System (Most Useful)
+
             int id = fiducial.getFiducialId(); // The ID number of the fiducial
+            double distance = robotPoseTarget.getPosition().x; // distance from tag
             double x = detection.getTargetXDegrees(); // Where it is (left-right)
             double y = detection.getTargetYDegrees(); // Where it is (up-down)
-            double StrafeDistance_3D;
-            StrafeDistance_3D = fiducial.getRobotPoseTargetSpace().getPosition().y;();
-            telemetry.addData("Fiducial " + id, "is " + x + " meters away");
+            double StrafeDistance_3D = robotPoseTarget.getPosition().y;
+            telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
+
         }
-
-
-        LLResultTypes.FiducialResult fiducial;
-        fiducial.getRobotPoseTargetSpace(); // Robot pose relative it the AprilTag Coordinate System (Most Useful)
-        fiducial.getCameraPoseTargetSpace(); // Camera pose relative to the AprilTag (useful)
-        fiducial.getRobotPoseFieldSpace(); // Robot pose in the field coordinate system based on this tag alone (useful)
-        fiducial.getTargetPoseCameraSpace(); // AprilTag pose in the camera's coordinate system (not very useful)
-        fiducial.getTargetPoseRobotSpace(); // AprilTag pose in the robot's coordinate system (not very useful)
 
         List<LLResultTypes.BarcodeResult> barcodes = result.getBarcodeResults();
         for (LLResultTypes.BarcodeResult barcode : barcodes) {
@@ -113,9 +104,8 @@ public class LimeLight {
             double confidence = classification.getConfidence(); // Confidence Score
             telemetry.addData("I see a", className + " (" + confidence + "%)");
         }
-
         List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
-        for (detections) {
+        for (LLResultTypes.DetectorResult det : detections) {
             String className = detection.getClassName(); // What was detected
             double x = detection.getTargetXDegrees(); // Where it is (left-right)
             double y = detection.getTargetYDegrees(); // Where it is (up-down)
