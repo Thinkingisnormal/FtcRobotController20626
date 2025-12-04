@@ -12,16 +12,23 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import java.util.List;
 
 @Autonomous
-public class LimeLight extends OpMode{
+public class LimeLight extends OpMode {
     Limelight3A limelight;
+
     @Override
     public void init() {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(100); // This sets how often we ask Limelight for data (100 times per second)
         limelight.start(); // This tells Limelight to start looking!
-
         limelight.pipelineSwitch(0); // Switch to pipeline number 0
 
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+        double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        limelight.updateRobotOrientation(robotYaw);
+    }
+
+    @Override
+    public void loop() {
         LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
             double tx = result.getTx(); // How far left or right the target is (degrees)
@@ -57,9 +64,6 @@ public class LimeLight extends OpMode{
         }
 
         // First, tell Limelight which way your robot is facing
-        IMU imu = hardwareMap.get(IMU.class, "imu");
-        double robotYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        limelight.updateRobotOrientation(robotYaw);
         if (result.isValid()) {
             Pose3D botpose_mt2 = result.getBotpose_MT2();
             if (botpose_mt2 != null) {
@@ -68,14 +72,29 @@ public class LimeLight extends OpMode{
                 telemetry.addData("MT2 Location:", "(" + x + ", " + y + ")");
             }
         }
-
+        //Color Results
         List<LLResultTypes.ColorResult> colorTargets = result.getColorResults();
-        LLResultTypes.DetectorResult detection = (LLResultTypes.DetectorResult) result.getDetectorResults();
-        for (LLResultTypes.ColorResult colorTarget : colorTargets) {
-            double x = detection.getTargetXDegrees(); // Where it is (left-right)
-            double y = detection.getTargetYDegrees(); // Where it is (up-down)
-            double area = colorTarget.getTargetArea(); // size (0-100)
-            telemetry.addData("Color Target", "takes up " + area + "% of the image");
+        List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+
+        for (int i = 0; i < colorTargets.size(); i++) {
+            LLResultTypes.ColorResult colorTarget = colorTargets.get(i);
+            LLResultTypes.DetectorResult det = detections.get(i);
+
+            double x = det.getTargetXDegrees(); // horizontal angle
+            double y = det.getTargetYDegrees(); // vertical angle
+            double area = colorTarget.getTargetArea(); // the area of the object
+
+            // identify the colors
+            String colorName = det.getClassName(); // color class name
+
+            if (colorName.equalsIgnoreCase("Green"))
+            {
+                telemetry.addData("Green Target", "at (" + x + ", " + y + ") degrees, area: " + area + "%");
+            }
+            else if (colorName.equalsIgnoreCase("Purple"))
+            {
+                telemetry.addData("Purple Target", "at (" + x + ", " + y + ") degrees, area: " + area + "%");
+            }
         }
 
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
@@ -85,8 +104,6 @@ public class LimeLight extends OpMode{
 
             int id = fiducial.getFiducialId(); // The ID number of the fiducial
             double distance = robotPoseTarget.getPosition().x; // distance from tag
-            double x = detection.getTargetXDegrees(); // Where it is (left-right)
-            double y = detection.getTargetYDegrees(); // Where it is (up-down)
             double StrafeDistance_3D = robotPoseTarget.getPosition().y;
             telemetry.addData("Fiducial " + id, "is " + distance + " meters away");
 
@@ -105,11 +122,11 @@ public class LimeLight extends OpMode{
             double confidence = classification.getConfidence(); // Confidence Score
             telemetry.addData("I see a", className + " (" + confidence + "%)");
         }
-        List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
+        detections = result.getDetectorResults();
         for (LLResultTypes.DetectorResult det : detections) {
-            String className = detection.getClassName(); // What was detected
-            double x = detection.getTargetXDegrees(); // Where it is (left-right)
-            double y = detection.getTargetYDegrees(); // Where it is (up-down)
+            String className = det.getClassName(); // What was detected
+            double x = det.getTargetXDegrees(); // Where it is (left-right)
+            double y = det.getTargetYDegrees(); // Where it is (up-down)
             telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
         }
 
@@ -132,5 +149,6 @@ public class LimeLight extends OpMode{
 
         limelight.deleteSnapshots();
         telemetry.addData("Snapshots", "All cleared out!");
+        telemetry.update();
     }
 }
