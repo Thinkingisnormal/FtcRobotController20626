@@ -201,13 +201,13 @@ public class BasicOmniOpMode_Movement extends OpMode {
         switch (launchState) {
             case IDLE:
                 if (shotRequested) {
-                    launchState = LaunchState.SPIN_UP;
                     launcherTimer.reset();
+                    launchState = LaunchState.SPIN_UP;
                 }
                 break;
             case SPIN_UP:
                 launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                if (launcher.getVelocity() >= LAUNCHER_TARGET_VELOCITY &&
+                if (launcher.getVelocity() >= LAUNCHER_MIN_VELOCITY &&
                         launcherTimer.seconds() > TIME_BEFORE_LAUNCH) { //changed min to target
                         launchState = LaunchState.LAUNCH;
                 }
