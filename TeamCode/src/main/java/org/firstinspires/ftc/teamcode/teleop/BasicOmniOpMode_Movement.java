@@ -23,7 +23,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 */
 
 
-@TeleOp(name="Basic: Omni OpMode(robot centric", group="Linear OpMode")
+@TeleOp(name="Basic: Omni OpMode(robot centric)", group="Linear OpMode")
 
 public class BasicOmniOpMode_Movement extends OpMode {
 
@@ -62,12 +62,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
     //of our code while only running specific code when it's necessary. We can continuously check
     //what "State" our machine is in, run the associated code, and when we are done with that step
     //move on to the next state.
-    private enum LaunchState {
-        IDLE,
-        SPIN_UP,
-        LAUNCH,
-        LAUNCHING,
-    }
+    private enum LaunchState {IDLE, SPIN_UP, LAUNCH, LAUNCHING,}
 
     private LaunchState launchState;
 
