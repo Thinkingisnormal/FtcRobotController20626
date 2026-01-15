@@ -1,11 +1,10 @@
-package org.firstinspires.ftc.teamcode.auto;
+package org.firstinspires.ftc.teamcode.oldcode.oldcode.oldauto;
 
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
 @Autonomous(name="Funny Auto",group="Auto")
 public class RudimentaryAuto extends LinearOpMode {
