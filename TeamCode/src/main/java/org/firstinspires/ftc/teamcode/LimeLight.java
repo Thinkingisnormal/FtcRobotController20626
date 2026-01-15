@@ -72,31 +72,6 @@ public class LimeLight extends OpMode {
                 telemetry.addData("MT2 Location:", "(" + x + ", " + y + ")");
             }
         }
-        //Color Results
-        List<LLResultTypes.ColorResult> colorTargets = result.getColorResults();
-        List<LLResultTypes.DetectorResult> detections = result.getDetectorResults();
-
-        for (int i = 0; i < colorTargets.size(); i++) {
-            LLResultTypes.ColorResult colorTarget = colorTargets.get(i);
-            LLResultTypes.DetectorResult det = detections.get(i);
-
-            double x = det.getTargetXDegrees(); // horizontal angle
-            double y = det.getTargetYDegrees(); // vertical angle
-            double area = colorTarget.getTargetArea(); // the area of the object
-
-            // identify the colors
-            String colorName = det.getClassName(); // color class name
-
-            if (colorName.equalsIgnoreCase("Green"))
-            {
-                telemetry.addData("Green Target", "at (" + x + ", " + y + ") degrees, area: " + area + "%");
-            }
-            else if (colorName.equalsIgnoreCase("Purple"))
-            {
-                telemetry.addData("Purple Target", "at (" + x + ", " + y + ") degrees, area: " + area + "%");
-            }
-        }
-
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
         for (LLResultTypes.FiducialResult fiducial : fiducials) {
 
@@ -109,26 +84,6 @@ public class LimeLight extends OpMode {
 
         }
 
-        List<LLResultTypes.BarcodeResult> barcodes = result.getBarcodeResults();
-        for (LLResultTypes.BarcodeResult barcode : barcodes) {
-            String data = barcode.getData(); // What the barcode says
-            String family = barcode.getFamily(); // What type of barcode it is
-            telemetry.addData("Barcode", data + " (" + family + ")");
-        }
-
-        List<LLResultTypes.ClassifierResult> classifications = result.getClassifierResults();
-        for (LLResultTypes.ClassifierResult classification : classifications) {
-            String className = classification.getClassName(); // What Limelight thinks it sees
-            double confidence = classification.getConfidence(); // Confidence Score
-            telemetry.addData("I see a", className + " (" + confidence + "%)");
-        }
-        detections = result.getDetectorResults();
-        for (LLResultTypes.DetectorResult det : detections) {
-            String className = det.getClassName(); // What was detected
-            double x = det.getTargetXDegrees(); // Where it is (left-right)
-            double y = det.getTargetYDegrees(); // Where it is (up-down)
-            telemetry.addData(className, "at (" + x + ", " + y + ") degrees");
-        }
 
         long staleness = result.getStaleness();
         if (staleness < 100) { // Less than 100 milliseconds old

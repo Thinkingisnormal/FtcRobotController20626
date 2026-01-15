@@ -81,9 +81,6 @@ public class BasicOmniOpMode_Movement extends OpMode {
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
-    private DcMotorEx launcher = null;
-    private CRServo leftFeeder = null;
-    private CRServo rightFeeder = null;
 
 
     //state machine to "control our launcher motor and feeder servos in this program." The core advantage of
@@ -112,11 +109,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive = hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
-        launcher = hardwareMap.get(DcMotorEx.class, "launcher");
-        leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
-        rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
 
-        launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -142,19 +135,13 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive.setZeroPowerBehavior(BRAKE);
         frontRightDrive.setZeroPowerBehavior(BRAKE);
         backRightDrive.setZeroPowerBehavior(BRAKE);
-        launcher.setZeroPowerBehavior(BRAKE);
 
         /*
          * set Feeders to an initial value to initialize the servo controller
          */
-        leftFeeder.setPower(STOP_SPEED);
-        rightFeeder.setPower(STOP_SPEED);
 
         //got this from starter bot code example
-        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
 
-        leftFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
-        rightFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
 
@@ -180,8 +167,8 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
 
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   =  gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-        double lateral =  gamepad1.left_stick_x;
+        double axial   =  -gamepad1.left_stick_x;  // Note: pushing stick forward gives negative value
+        double lateral =  -gamepad1.left_stick_y;
         double yaw     =  -gamepad1.right_stick_x;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
@@ -229,59 +216,16 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive.setPower(backLeftPower);
         backRightDrive.setPower(backRightPower);
 
-        //for adjusting shooting power (only two options rn)
-        if (gamepad1.triangle) {
-            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-        } else if (gamepad1.cross) { //stop the thang from shooting
-            launcher.setVelocity(0);
-        }
 
         //press right trigger to shoot.
-        launch(gamepad1.rightBumperWasPressed());
 
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("State", launchState);
-        telemetry.addData("FeederPower:", leftFeeder.getPower());
-        telemetry.addData("motorSpeed", launcher.getVelocity());
-        telemetry.addData("Feeder timer (should stop  when hits 0.10:", feederTimer.seconds());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
         telemetry.update();
 
     }
 
-      void launch(boolean shotRequested) {
-        switch (launchState) {
-            case IDLE:
-                if (shotRequested) {
-                    launchState = LaunchState.SPIN_UP;
-                }
-                break;
-            case SPIN_UP:
-                launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-                if (launcher.getVelocity() > LAUNCHER_MIN_VELOCITY) { //changed min to target
-                    launcherTimer.reset();
-                    if (launcherTimer.seconds() > TIME_BEFORE_LAUNCH) {
-                        launchState = LaunchState.LAUNCH;
-                    }
-                }
-                break;
-            case LAUNCH:
-                leftFeeder.setPower(FULL_SPEED);
-                rightFeeder.setPower(FULL_SPEED);
-                feederTimer.reset(); //starts timer
-                launchState = LaunchState.LAUNCHING;
-                break;
-            case LAUNCHING:
-                if (feederTimer.seconds() > FEED_TIME_SECONDS) {
-                    launchState = LaunchState.IDLE;
-                    leftFeeder.setPower(STOP_SPEED);
-                    rightFeeder.setPower(STOP_SPEED);
-                }
-                break;
-        }
-
-    }
 }
