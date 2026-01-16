@@ -72,8 +72,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
     final double FEED_TIME_SECONDS = 0.2; //The feeder servos run this long when a shot is requested.
     final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
     private ElapsedTime runtime = new ElapsedTime();
-    private ElapsedTime feederTimer = new ElapsedTime();
-    private ElapsedTime launcherTimer = new ElapsedTime();
+
 
 
 
@@ -101,9 +100,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
     public void init() {
         launchState = LaunchState.IDLE;
 
-        // Initialize the hardware variables. Note that the strings used here must correspond
-        // to the names assigned during the robot configuration step on the DS or RC devices.
-        // holy shit i should've just read above smh my head. -dl
+
 
         frontLeftDrive = hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = hardwareMap.get(DcMotor.class, "back_left_drive");
@@ -111,19 +108,10 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backRightDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
 
 
-        // ########################################################################################
-        // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
-        // ########################################################################################
-        // Most robots need the motors on one side to be reversed to drive forward.
-        // The motor reversals shown here are for a "direct drive" robot (the wheels turn the same direction as the motor shaft)
-        // If your robot has additional gear reductions or uses a right-angled drive, it's important to ensure
-        // that your motors are turning in the correct direction.  So, start out with the reversals here, BUT
-        // when you first test your robot, push the left joystick forward and observe the direction the wheels turn.
-        // Reverse the direction (flip FORWARD <-> REVERSE ) of any wheel that runs backward
-        // Keep testing until ALL the wheels move the robot forward when you push the left joystick forward.
+
         frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        backLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         /*
@@ -167,9 +155,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
 
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   =  -gamepad1.left_stick_x;  // Note: pushing stick forward gives negative value
-        double lateral =  -gamepad1.left_stick_y;
-        double yaw     =  -gamepad1.right_stick_x;
+        double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
+        double lateral =  -gamepad1.left_stick_x;
+        double yaw     =  gamepad1.right_stick_x;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.

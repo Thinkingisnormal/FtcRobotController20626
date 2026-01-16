@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
 import java.util.List;
 
 @Autonomous
@@ -63,15 +64,6 @@ public class LimeLight extends OpMode {
             }
         }
 
-        // First, tell Limelight which way your robot is facing
-        if (result.isValid()) {
-            Pose3D botpose_mt2 = result.getBotpose_MT2();
-            if (botpose_mt2 != null) {
-                double x = botpose_mt2.getPosition().x;
-                double y = botpose_mt2.getPosition().y;
-                telemetry.addData("MT2 Location:", "(" + x + ", " + y + ")");
-            }
-        }
         List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
         for (LLResultTypes.FiducialResult fiducial : fiducials) {
 
@@ -105,5 +97,14 @@ public class LimeLight extends OpMode {
         limelight.deleteSnapshots();
         telemetry.addData("Snapshots", "All cleared out!");
         telemetry.update();
+
+
+    }
+
+
+    private void lockin (int tx, int ty, int tv) {
+
+
+
     }
 }
