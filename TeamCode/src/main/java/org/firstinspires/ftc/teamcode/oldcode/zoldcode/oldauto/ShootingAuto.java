@@ -76,12 +76,13 @@ public class ShootingAuto extends OpMode{
                 case SPINUP:
                     if (launcher.getVelocity() >= LAUNCHER_MIN_VELOCITY &&
                             spinupTimer.seconds() > TIME_BEFORE_LAUNCH) {
-
-                        state = AutoState.LAUNCHING;
-                        feedTimer.reset();
-
+                        
                         leftFeeder.setPower(FULL_SPEED);
                         rightFeeder.setPower(FULL_SPEED);
+                        
+                        feedTimer.reset();
+                        
+                        state = AutoState.LAUNCHING;
                     }
                     break;
 
