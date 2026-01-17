@@ -37,13 +37,13 @@ public class ShootingAuto extends OpMode{
 
     private int shotcount = 0;
 
-    private HardwareMap hwMap;
+    
 
     @Override
     public void init(){
-        launcher = hwMap.get(DcMotorEx.class, "launcher");
-        leftFeeder = hwMap.get(CRServo.class,"left_feeder");
-        rightFeeder = hwMap.get(CRServo.class,"right_feeder");
+        launcher = hardwareMap.get(DcMotorEx.class, "launcher");
+        leftFeeder = hardwareMap.get(CRServo.class,"left_feeder");
+        rightFeeder = hardwareMap.get(CRServo.class,"right_feeder");
 
         launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
