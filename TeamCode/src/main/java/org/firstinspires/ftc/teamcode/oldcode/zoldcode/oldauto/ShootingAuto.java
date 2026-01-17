@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
-@Autonomous (name="funny auto 2 (it better work)", group="Auto")
+@Autonomous (name="funny auto 2 (it better work or else....)", group="Auto")
 public class ShootingAuto extends OpMode{
 
     final double STOP_SPEED = 0.0;
