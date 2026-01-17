@@ -32,7 +32,7 @@ public class ShootingAuto extends OpMode{
     private ElapsedTime spinupTimer = new ElapsedTime();
     private ElapsedTime feedTimer = new ElapsedTime();
 
-    private enum AutoState {IDLE,SPINUP, FEED, DONE}
+    private enum AutoState {IDLE,SPINUP, LAUNCHING, DONE}
     private AutoState state;
 
     private int shotcount = 0;
@@ -77,7 +77,7 @@ public class ShootingAuto extends OpMode{
                     if (launcher.getVelocity() >= LAUNCHER_MIN_VELOCITY &&
                             spinupTimer.seconds() > TIME_BEFORE_LAUNCH) {
 
-                        state = AutoState.FEED;
+                        state = AutoState.LAUNCHING;
                         feedTimer.reset();
 
                         leftFeeder.setPower(FULL_SPEED);
@@ -85,7 +85,7 @@ public class ShootingAuto extends OpMode{
                     }
                     break;
 
-                case FEED:
+                case LAUNCHING:
                     if (feedTimer.seconds() > FEED_TIME_SECONDS) {
 
                         // stop feeders
