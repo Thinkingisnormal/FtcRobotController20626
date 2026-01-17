@@ -33,6 +33,7 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -40,8 +41,10 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.teamcode.mechanisms.AprilTagLimelight;
 
 /*
  * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
@@ -71,16 +74,19 @@ public class BasicOmniOpMode_Movement extends OpMode {
     //timers
     final double FEED_TIME_SECONDS = 0.2; //The feeder servos run this long when a shot is requested.
     final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
-    private ElapsedTime runtime = new ElapsedTime();
+    private final ElapsedTime runtime = new ElapsedTime();
+
+    private final AprilTagLimelight limelight = new AprilTagLimelight();
 
 
+    private DcMotor frontLeftDrive;
+    private DcMotor backLeftDrive;
+    private DcMotor frontRightDrive;
+    private DcMotor backRightDrive;
+    private DcMotor outerIntake;
+    private DcMotor innerIntake;
 
-
-    private DcMotor frontLeftDrive= null;
-    private DcMotor backLeftDrive = null;
-    private DcMotor frontRightDrive = null;
-    private DcMotor backRightDrive = null;
-
+    private IMU imu;
 
     //state machine to "control our launcher motor and feeder servos in this program." The core advantage of
     // a state machine is that it allows us to continue to loop through all
@@ -101,17 +107,18 @@ public class BasicOmniOpMode_Movement extends OpMode {
         launchState = LaunchState.IDLE;
 
 
-
         frontLeftDrive = hardwareMap.get(DcMotor.class, "front_left_drive");
         backLeftDrive = hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
 
+        innerIntake = hardwareMap.get(DcMotor.class,"inner_intake");
+        outerIntake = hardwareMap.get(DcMotor.class,"outer_intake");
 
 
-        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         /*
@@ -124,13 +131,17 @@ public class BasicOmniOpMode_Movement extends OpMode {
         frontRightDrive.setZeroPowerBehavior(BRAKE);
         backRightDrive.setZeroPowerBehavior(BRAKE);
 
-        /*
-         * set Feeders to an initial value to initialize the servo controller
-         */
-
-        //got this from starter bot code example
 
 
+
+        // initialize IMU for Limelight.
+        imu = hardwareMap.get(IMU.class, "imu");
+        RevHubOrientationOnRobot revHubOrientationOnRobot =
+                new RevHubOrientationOnRobot(RevHubOrientationOnRobot.LogoFacingDirection.LEFT, //DIRECTIONS NOT CHECKED
+                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD); //DIRECTIONS NOT CHECKED
+        imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
+
+        limelight.LimeInit(hardwareMap,imu,telemetry);
 
 
         // Wait for the game to start (driver presses START)
@@ -149,15 +160,19 @@ public class BasicOmniOpMode_Movement extends OpMode {
         //this is not needed but is here if we ever need it.
     }
 
+    @Override
+    public void stop() {
+        limelight.Stop();
+    }
 
     @Override
     public void loop() {
 
-
+        limelight.aprilTagLoop();
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   =  -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-        double lateral =  -gamepad1.left_stick_x;
-        double yaw     =  gamepad1.right_stick_x;
+        double axial   =  -gamepad1.right_stick_x;  // Note: pushing stick forward gives negative value
+        double lateral =  gamepad1.left_stick_y;
+        double yaw     =  gamepad1.left_stick_x;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -181,22 +196,13 @@ public class BasicOmniOpMode_Movement extends OpMode {
             backRightPower  /= max;
         }
 
-        // This is test code:
-        //
-        // Uncomment the following code to test your motor directions.
-        // Each button should make the corresponding motor run FORWARD.
-        //   1) First get all the motors to take to correct positions on the robot
-        //      by adjusting your Robot Configuration if necessary.
-        //   2) Then make sure they run in the correct direction by modifying the
-        //      the setDirection() calls above.
-        // Once the correct motors move in the correct direction re-comment this code.
-
-            /*
-            frontLeftPower  = gamepad1.x ? 1.0 : 0.0;  // X gamepad
-            backLeftPower   = gamepad1.a ? 1.0 : 0.0;  // A gamepad
-            frontRightPower = gamepad1.y ? 1.0 : 0.0;  // Y gamepad
-            backRightPower  = gamepad1.b ? 1.0 : 0.0;  // B gamepad
-            */
+        if(gamepad1.cross) {
+            innerIntake.setPower(-1);
+            outerIntake.setPower(-1);
+        } else if (gamepad1.triangle) {
+            innerIntake.setPower(0);
+            outerIntake.setPower(0);
+        }
 
         // Send calculated power to wheels
         frontLeftDrive.setPower(frontLeftPower);
@@ -205,9 +211,8 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backRightDrive.setPower(backRightPower);
 
 
-        //press right trigger to shoot.
 
-
+        limelight.rumbleForDistance(gamepad1);
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
