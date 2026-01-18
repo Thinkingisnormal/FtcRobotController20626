@@ -212,7 +212,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
 
 
-        limelight.rumbleForDistance(gamepad1);
+        limelight.rangeRumble(gamepad1,gamepad2);
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
