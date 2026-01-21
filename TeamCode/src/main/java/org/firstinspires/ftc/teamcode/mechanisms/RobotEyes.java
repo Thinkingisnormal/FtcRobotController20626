@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode.mechanisms;
 
 
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -13,8 +12,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import java.lang.Math;
-import java.util.List;
-public class AprilTagLimelight  {
+
+public class RobotEyes {
     private Limelight3A limelight;
     private IMU imu;
 
@@ -108,7 +107,7 @@ public class AprilTagLimelight  {
         double MIN_DISTANCE = range * 0.95;
         double MAX_DISTANCE = range * 1.05;
 
-        if ((calcedDistance > MIN_DISTANCE) && (calcedDistance < MAX_DISTANCE)) {
+        if ((calcedDistance+1 > MIN_DISTANCE) && (calcedDistance+1 < MAX_DISTANCE)) {
             g1.rumble(200);
             g2.rumble(200);
         } else {g1.stopRumble();g2.rumble(200);}

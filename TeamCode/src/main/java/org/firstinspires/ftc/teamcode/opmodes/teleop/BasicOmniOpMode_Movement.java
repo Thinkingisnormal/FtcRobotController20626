@@ -34,17 +34,16 @@ package org.firstinspires.ftc.teamcode.opmodes.teleop;
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import org.firstinspires.ftc.teamcode.mechanisms.AprilTagLimelight;
+import org.firstinspires.ftc.teamcode.mechanisms.RobotEyes;
 
 /*
  * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
@@ -65,8 +64,8 @@ public class BasicOmniOpMode_Movement extends OpMode {
 
 
     //for launcher encoders.
-    final double LAUNCHER_TARGET_VELOCITY = 1125;
-    final double LAUNCHER_MIN_VELOCITY = 1075;
+    final double LAUNCHER_TARGET_VELOCITY = 5000;
+    final double LAUNCHER_MIN_VELOCITY = 1250;
 
 
     // Declare OpMode members
@@ -74,9 +73,11 @@ public class BasicOmniOpMode_Movement extends OpMode {
     //timers
     final double FEED_TIME_SECONDS = 0.2; //The feeder servos run this long when a shot is requested.
     final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
-    private final ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime feederTimer = new ElapsedTime();
+    private ElapsedTime launcherTimer = new ElapsedTime();
 
-    private final AprilTagLimelight limelight = new AprilTagLimelight();
+    private final RobotEyes limelight = new RobotEyes();
 
 
     private DcMotor frontLeftDrive;
@@ -85,6 +86,11 @@ public class BasicOmniOpMode_Movement extends OpMode {
     private DcMotor backRightDrive;
     private DcMotor outerIntake;
     private DcMotor innerIntake;
+    private CRServo leftFeeder ;
+    private CRServo rightFeeder;
+    private DcMotorEx launcher;
+    private DcMotorEx launcher1;
+
 
     private IMU imu;
 
@@ -111,6 +117,10 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive = hardwareMap.get(DcMotor.class, "back_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         backRightDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
+        launcher = hardwareMap.get(DcMotorEx.class, "launcher");
+        launcher1 = hardwareMap.get(DcMotorEx.class, "launcher1");
+        leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
+        rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
 
         innerIntake = hardwareMap.get(DcMotor.class,"inner_intake");
         outerIntake = hardwareMap.get(DcMotor.class,"outer_intake");
@@ -130,9 +140,22 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive.setZeroPowerBehavior(BRAKE);
         frontRightDrive.setZeroPowerBehavior(BRAKE);
         backRightDrive.setZeroPowerBehavior(BRAKE);
+        launcher.setZeroPowerBehavior(BRAKE);
+        launcher1.setZeroPowerBehavior(BRAKE);
 
 
+        /*
+         * set Feeders to an initial value to initialize the servo controller
+         */
+        leftFeeder.setPower(STOP_SPEED);
+        rightFeeder.setPower(STOP_SPEED);
 
+        //got this from starter bot code example
+        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
+        launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
+
+        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
+        rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
 
         // initialize IMU for Limelight.
         imu = hardwareMap.get(IMU.class, "imu");
@@ -203,6 +226,17 @@ public class BasicOmniOpMode_Movement extends OpMode {
             innerIntake.setPower(0);
             outerIntake.setPower(0);
         }
+        if(gamepad1.square) {
+            launcher.setVelocity(FULL_SPEED);
+            launcher1.setVelocity(FULL_SPEED);
+            launcher.setVelocity(FULL_SPEED);
+            launcher1.setVelocity(FULL_SPEED);
+        } else if (gamepad1.circle) {
+            launcher.setVelocity(0);
+            launcher1.setVelocity(0);
+            leftFeeder.setPower(0);
+            rightFeeder.setPower(0);
+        }
 
         // Send calculated power to wheels
         frontLeftDrive.setPower(frontLeftPower);
@@ -210,15 +244,54 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backLeftDrive.setPower(backLeftPower);
         backRightDrive.setPower(backRightPower);
 
-
+        //press right trigger to shoot.
+        launch(gamepad1.rightBumperWasPressed());
 
         limelight.rangeRumble(gamepad1,gamepad2);
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
+        telemetry.addData("State", launchState);
+        telemetry.addData("FeederPower:", leftFeeder.getPower());
+        telemetry.addData("motorSpeed", launcher1.getVelocity());
+        telemetry.addData("Feeder timer (should stop  when hits 0.10:", feederTimer.seconds());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
         telemetry.update();
 
     }
 
+      public void launch(boolean shotRequested) {
+        switch (launchState) {
+            case IDLE:
+                if (shotRequested) {
+                    launcherTimer.reset();
+                    launchState = LaunchState.SPIN_UP;
+                }
+                break;
+            case SPIN_UP:
+                launcher1.setVelocity(LAUNCHER_TARGET_VELOCITY);
+                launcher.setVelocity(-LAUNCHER_TARGET_VELOCITY);
+
+                if (launcher1.getVelocity() >= LAUNCHER_MIN_VELOCITY &&
+                        launcherTimer.seconds() > TIME_BEFORE_LAUNCH) { //changed min to target
+                        launchState = LaunchState.LAUNCH;
+
+                }
+                break;
+            case LAUNCH:
+                leftFeeder.setPower(FULL_SPEED);
+                rightFeeder.setPower(FULL_SPEED);
+                feederTimer.reset(); //starts timer
+                launchState = LaunchState.LAUNCHING;
+                break;
+            case LAUNCHING:
+                if (feederTimer.seconds() > FEED_TIME_SECONDS) {
+                    launchState = LaunchState.IDLE;
+                    leftFeeder.setPower(STOP_SPEED);
+                    rightFeeder.setPower(STOP_SPEED);
+                }
+                break;
+        }
+
+    }
 }
