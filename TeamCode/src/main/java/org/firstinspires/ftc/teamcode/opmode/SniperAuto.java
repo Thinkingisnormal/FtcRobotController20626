@@ -1,4 +1,9 @@
 package org.firstinspires.ftc.teamcode.opmode;
 
-public class SniperAuto {
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+
+@Autonomous(name="Sniper Auto",group="opmodes")
+public class SniperAuto extends OpMode {
+    
 }

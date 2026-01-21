@@ -4,7 +4,7 @@ import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp(name="Two Player Teleop")
+@TeleOp(name="Two Player Teleop", group="opmodes")
 @Configurable
 public class TwoPlayerTeleOp extends OpMode {
 

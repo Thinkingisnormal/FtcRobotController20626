@@ -65,7 +65,6 @@ public class Intake extends SubsystemBase {
                 break;
 
             default:
-
                 break;
         }
     }
