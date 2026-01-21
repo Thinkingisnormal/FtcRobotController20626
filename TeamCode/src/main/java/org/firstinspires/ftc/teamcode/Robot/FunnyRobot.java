@@ -27,7 +27,7 @@ public class FunnyRobot {
 
     //hardware
     public MotorEx intakeRight, intakeLeft;
-    public MotorEx shooterRightHoodHood, shooterLeftHood;
+    public MotorEx shooterRightHood, shooterLeftHood;
     public ServoEx boosterRight, boosterLeft;
 
     //Sensors
