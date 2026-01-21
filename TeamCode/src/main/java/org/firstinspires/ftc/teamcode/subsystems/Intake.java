@@ -22,7 +22,7 @@ public class Intake extends SubsystemBase {
     public void setMode(intakeMode newMode){
         IntakeMode = newMode;
     }
-/*
+
     public void ingest() {
         IntakeMode = IntakeMode.INGESTING;
     }
@@ -42,7 +42,7 @@ public class Intake extends SubsystemBase {
             IntakeMode = IntakeMode.OFF;
         }
     }
-    */
+
 
     @Override
     public void periodic(){
