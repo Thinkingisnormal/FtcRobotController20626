@@ -37,13 +37,13 @@ public class Booster extends SubsystemBase {
 
         switch (state) {
             case REST:
-                //robot.boosterLeft.setPosition(LEFT_REST_POS);
-                //robot.boosterRight.setPosition(RIGHT_REST_POS);
+                robot.boosterLeft.set(LEFT_REST_POS);
+                robot.boosterRight.set(RIGHT_REST_POS);
                 break;
 
             case FIRE:
-                //robot.boosterLeft.setPosition(LEFT_FIRE_POS);
-                //robot.boosterRight.setPosition(RIGHT_FIRE_POS);
+                robot.boosterLeft.set(LEFT_FIRE_POS);
+                robot.boosterRight.set(RIGHT_FIRE_POS);
                 break;
         }
     }

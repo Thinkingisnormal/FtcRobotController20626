@@ -32,7 +32,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void stop() {
-        IntakeMode = IntakeMode.OFF;
+        IntakeMode = intakeMode.OFF;
     }
 
     public void toggle() {
@@ -50,18 +50,18 @@ public class Intake extends SubsystemBase {
 
         switch (IntakeMode){
             case INGESTING:
-                //robot.intakeLeft.setPower(INGESTING_MOTOR_SPEED);
-                //robot.intakeRight.setPower(INGESTING_MOTOR_SPEED);
+                robot.intakeLeft.set(INGESTING_MOTOR_SPEED);
+                robot.intakeRight.set(INGESTING_MOTOR_SPEED);
                 break;
 
             case DISCARDING:
-                //robot.intakeLeft.setPower(DISCARDING_MOTOR_SPEED);
-                //robot.intakeRight.setPower(DISCARDING_MOTOR_SPEED);
+                robot.intakeLeft.set(DISCARDING_MOTOR_SPEED);
+                robot.intakeRight.set(DISCARDING_MOTOR_SPEED);
                 break;
 
             case OFF:
-                //robot.intakeLeft.setPower(0);
-                //robot.intakeRight.setPower(0);
+                robot.intakeLeft.set(0);
+                robot.intakeRight.set(0);
                 break;
 
             default:
