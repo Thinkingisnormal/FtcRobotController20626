@@ -27,7 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.opmodes.teleop;
+package org.firstinspires.ftc.teamcode.oldcode.oldcode.teleop;
 
 //def of "BRAKE" The motor stops and then floats: an external force attempting to turn the motor is not met with active resistence.
 
@@ -36,14 +36,16 @@ import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.teamcode.mechanisms.RobotEyes;
+import org.firstinspires.ftc.teamcode.mechanisms.pinpoint;
 
 /*
  * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
@@ -54,9 +56,9 @@ import org.firstinspires.ftc.teamcode.mechanisms.RobotEyes;
 */
 
 
-@TeleOp(name="Basic: Omni OpMode", group="Linear OpMode")
+@TeleOp(name="Single Driver TeleOp", group="Linear OpMode")
 
-public class BasicOmniOpMode_Movement extends OpMode {
+public class DuoDrive_Opmode extends OpMode {
 
     // for feeders:
     final double STOP_SPEED = 0.0; //We send this power to the servos when we want them to stop.
@@ -78,6 +80,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
     private ElapsedTime launcherTimer = new ElapsedTime();
 
     private final RobotEyes limelight = new RobotEyes();
+    private final pinpoint pinpoint = new pinpoint();
 
 
     private DcMotor frontLeftDrive;
@@ -165,7 +168,7 @@ public class BasicOmniOpMode_Movement extends OpMode {
         imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
 
         limelight.LimeInit(hardwareMap,imu,telemetry);
-
+        pinpoint.init(hardwareMap, telemetry);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -219,19 +222,19 @@ public class BasicOmniOpMode_Movement extends OpMode {
             backRightPower  /= max;
         }
 
-        if(gamepad1.cross) {
+        if(gamepad2.cross) {
             innerIntake.setPower(-1);
             outerIntake.setPower(-1);
-        } else if (gamepad1.triangle) {
+        } else if (gamepad2.triangle) {
             innerIntake.setPower(0);
             outerIntake.setPower(0);
         }
-        if(gamepad1.square) {
+        if(gamepad2.square) {
             launcher.setVelocity(FULL_SPEED);
             launcher1.setVelocity(FULL_SPEED);
             launcher.setVelocity(FULL_SPEED);
             launcher1.setVelocity(FULL_SPEED);
-        } else if (gamepad1.circle) {
+        } else if (gamepad2.circle) {
             launcher.setVelocity(0);
             launcher1.setVelocity(0);
             leftFeeder.setPower(0);
@@ -245,9 +248,9 @@ public class BasicOmniOpMode_Movement extends OpMode {
         backRightDrive.setPower(backRightPower);
 
         //press right trigger to shoot.
-        launch(gamepad1.rightBumperWasPressed());
+        launch(gamepad2.rightBumperWasPressed());
 
-        limelight.rangeRumble(gamepad1,gamepad2);
+        limelight.rangeRumble(gamepad1,gamepad2, pinpoint.getV());
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("State", launchState);

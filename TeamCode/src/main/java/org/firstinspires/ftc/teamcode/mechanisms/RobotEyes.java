@@ -84,13 +84,13 @@ public class RobotEyes {
 
     //rumbles gamepad if distances is in range of min and max to notify the driver they are in good spot.
 
-    public void rangeRumble (Gamepad g1, Gamepad g2) {
+    public void rangeRumble (Gamepad g1, Gamepad g2, double[] velocity) {
 
-        final double goalHeight = 30 * 0.0254; // inches to meters (PLEASE MEASURE AS THIS IS ESTIMATION)
         final double botHeight  = 12 * 0.0254; // inches to meters (PLEASE MEASURE AS THIS IS ESTIMATION)
+        final double goalHeight = 42 * 0.0254; // inches to meters (PLEASE MEASURE AS THIS IS ESTIMATION)
 
         double iVelocity = 6.36; // m/s SHOULDN'T BE HARDCODED
-        double botVelocity = 0;  // m/s SHOULDN'T BE HARDCODED; will get velocity from odometry
+        double botSpeed = Math.sqrt(Math.pow(velocity[0], 2) + Math.pow(velocity[1], 2));  // m/s
 
         final double angle = Math.toRadians(15);
 
@@ -98,7 +98,7 @@ public class RobotEyes {
         final double deltaY = goalHeight - botHeight;
 
         double vy = iVelocity * Math.sin(angle);
-        double vx = iVelocity * Math.cos(angle) + botVelocity;
+        double vx = iVelocity * Math.cos(angle) + botSpeed;
 
         double time = (vy + Math.sqrt(vy*vy + 2*g*deltaY)) / g;
         double range = vx * time;

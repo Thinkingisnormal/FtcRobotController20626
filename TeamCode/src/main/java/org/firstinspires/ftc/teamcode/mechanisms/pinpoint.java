@@ -12,10 +12,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 public class pinpoint {
 
     GoBildaPinpointDriver pinpoint;
-    public void init(HardwareMap hardwareMap) {
+
+    Telemetry telemetry = null;
+    public void init(HardwareMap hardwareMap, Telemetry telemetry) {
         // Get a reference to the sensor
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-
+        this.telemetry = telemetry;
         // Configure the sensor
         configurePinpoint();
 
@@ -24,7 +26,7 @@ public class pinpoint {
 
     }
 
-    public void loop(Telemetry telemetry, Gamepad gamepad1) {
+    public void loop(Gamepad gamepad1) {
         telemetry.addLine("Push your robot around to see it track");
         telemetry.addLine("Press A to reset the position");
         if(gamepad1.a){
@@ -76,5 +78,11 @@ public class pinpoint {
          * an incorrect starting value for x, y, and heading.
          */
         pinpoint.resetPosAndIMU();
+    }
+    public double[] getV() {
+        double[] velocity = new double[1];
+        velocity[0] = pinpoint.getVelX(DistanceUnit.METER);
+        velocity[1] = pinpoint.getVelY(DistanceUnit.METER);
+        return velocity;
     }
 }
