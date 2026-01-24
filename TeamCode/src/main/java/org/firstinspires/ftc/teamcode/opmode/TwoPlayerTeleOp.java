@@ -19,7 +19,7 @@ public class TwoPlayerTeleOp extends OpMode {
 
     @Override
     public void init(){
-        robot = FunnyRobot.get().init();
+        //robot = FunnyRobot.get().init();
         gamepad1Ex = new GamepadEx(gamepad1);
         gamepad2Ex = new GamepadEx(gamepad2);
 
