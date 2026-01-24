@@ -160,8 +160,8 @@ public class SingleDrive_Opmode extends OpMode {
         rightFeeder.setPower(STOP_SPEED);
 
         //got this from starter bot code example
-        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(0.0035, 0, 0.004, 0.0005118));
-        launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(0.0035, 0, 0.004, 0.0005118));
+        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(7, 0, 0, 7));
+        launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(7, 0, 0, 7));
 
         leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
