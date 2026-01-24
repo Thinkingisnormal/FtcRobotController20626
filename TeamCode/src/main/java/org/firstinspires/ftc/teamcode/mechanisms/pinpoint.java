@@ -27,18 +27,10 @@ public class pinpoint {
     }
 
     public void loop(Gamepad gamepad1) {
-        telemetry.addLine("Push your robot around to see it track");
-        telemetry.addLine("Press A to reset the position");
-        if(gamepad1.a){
-            // You could use readings from April Tags here to give a new known position to the pinpoint
-            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
-        }
+
         pinpoint.update();
         Pose2D pose2D = pinpoint.getPosition();
 
-        telemetry.addData("X coordinate (IN)", pose2D.getX(DistanceUnit.INCH));
-        telemetry.addData("Y coordinate (IN)", pose2D.getY(DistanceUnit.INCH));
-        telemetry.addData("Heading angle (DEGREES)", pose2D.getHeading(AngleUnit.DEGREES));
     }
     public void configurePinpoint(){
         /*
@@ -80,7 +72,7 @@ public class pinpoint {
         pinpoint.resetPosAndIMU();
     }
     public double[] getV() {
-        double[] velocity = new double[1];
+        double[] velocity = new double[2];
         velocity[0] = pinpoint.getVelX(DistanceUnit.METER);
         velocity[1] = pinpoint.getVelY(DistanceUnit.METER);
         return velocity;

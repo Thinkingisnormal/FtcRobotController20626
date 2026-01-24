@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.mechanisms;
 
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 
@@ -12,7 +13,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import java.lang.Math;
-
+@Configurable
 public class RobotEyes {
     private Limelight3A limelight;
     private IMU imu;
@@ -81,6 +82,7 @@ public class RobotEyes {
 
 
 
+    public double iVelocity = 6.36; // m/s SHOULDN'T BE HARDCODED
 
     //rumbles gamepad if distances is in range of min and max to notify the driver they are in good spot.
 
@@ -89,7 +91,6 @@ public class RobotEyes {
         final double botHeight  = 12 * 0.0254; // inches to meters (PLEASE MEASURE AS THIS IS ESTIMATION)
         final double goalHeight = 42 * 0.0254; // inches to meters (PLEASE MEASURE AS THIS IS ESTIMATION)
 
-        double iVelocity = 6.36; // m/s SHOULDN'T BE HARDCODED
         double botSpeed = Math.sqrt(Math.pow(velocity[0], 2) + Math.pow(velocity[1], 2));  // m/s
 
         final double angle = Math.toRadians(15);
@@ -102,6 +103,7 @@ public class RobotEyes {
 
         double time = (vy + Math.sqrt(vy*vy + 2*g*deltaY)) / g;
         double range = vx * time;
+        telemetry.addData("desired Range:",range );
 
 
         double MIN_DISTANCE = range * 0.95;

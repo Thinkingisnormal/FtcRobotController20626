@@ -56,7 +56,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.pinpoint;
 */
 
 
-@TeleOp(name="Single Driver TeleOp", group="Linear OpMode")
+@TeleOp(name="Duo Driver TeleOp", group="opmodes")
 
 public class DuoDrive_Opmode extends OpMode {
 

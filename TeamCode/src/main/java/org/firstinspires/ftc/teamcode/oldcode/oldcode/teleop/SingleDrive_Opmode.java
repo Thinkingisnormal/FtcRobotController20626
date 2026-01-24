@@ -27,12 +27,13 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode.opmodes.teleop;
+package org.firstinspires.ftc.teamcode.oldcode.oldcode.teleop;
 
 //def of "BRAKE" The motor stops and then floats: an external force attempting to turn the motor is not met with active resistence.
 
 import static com.qualcomm.robotcore.hardware.DcMotor.ZeroPowerBehavior.BRAKE;
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -55,8 +56,8 @@ import org.firstinspires.ftc.teamcode.mechanisms.pinpoint;
 */
 
 
-@TeleOp(name="Single Driver TeleOp", group="Linear OpMode")
-
+@TeleOp(name="Single Driver TeleOp", group="opmodes")
+@Configurable
 public class SingleDrive_Opmode extends OpMode {
 
     // for feeders:
@@ -65,8 +66,9 @@ public class SingleDrive_Opmode extends OpMode {
 
 
     //for launcher encoders.
-    final double LAUNCHER_TARGET_VELOCITY = 5000;
-    final double LAUNCHER_MIN_VELOCITY = 1250;
+    public static double LAUNCHER_TARGET_VELOCITY = 600;
+    public static double LAUNCHER_MIN_VELOCITY = 1120;
+    public static double PIDFVALUE = 300;
 
 
     // Declare OpMode members
@@ -134,6 +136,10 @@ public class SingleDrive_Opmode extends OpMode {
         frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
+        launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launcher1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
         /*
          * Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to
          * slow down much faster when it is coasting. This creates a much more controllable
@@ -154,8 +160,8 @@ public class SingleDrive_Opmode extends OpMode {
         rightFeeder.setPower(STOP_SPEED);
 
         //got this from starter bot code example
-        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
-        launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, 0, 10));
+        launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(0.0035, 0, 0.004, 0.0005118));
+        launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(0.0035, 0, 0.004, 0.0005118));
 
         leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -168,7 +174,7 @@ public class SingleDrive_Opmode extends OpMode {
         imu.initialize(new IMU.Parameters(revHubOrientationOnRobot));
 
         limelight.LimeInit(hardwareMap,imu,telemetry);
-        pinpoint.init(hardwareMap);
+        pinpoint.init(hardwareMap, telemetry);
 
         // Wait for the game to start (driver presses START)
         telemetry.addData("Status", "Initialized");
@@ -191,6 +197,7 @@ public class SingleDrive_Opmode extends OpMode {
         limelight.Stop();
     }
 
+    double[] velocityArray;
     @Override
     public void loop() {
 
@@ -231,15 +238,14 @@ public class SingleDrive_Opmode extends OpMode {
             outerIntake.setPower(0);
         }
         if(gamepad1.square) {
-            launcher.setVelocity(FULL_SPEED);
-            launcher1.setVelocity(FULL_SPEED);
-            launcher.setVelocity(FULL_SPEED);
-            launcher1.setVelocity(FULL_SPEED);
-        } else if (gamepad1.circle) {
+            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
+            launcher1.setVelocity(-LAUNCHER_TARGET_VELOCITY);
+           } else if (gamepad1.circle) {
             launcher.setVelocity(0);
             launcher1.setVelocity(0);
             leftFeeder.setPower(0);
             rightFeeder.setPower(0);
+            launchState = LaunchState.IDLE;
         }
 
         // Send calculated power to wheels
@@ -251,12 +257,15 @@ public class SingleDrive_Opmode extends OpMode {
         //press right trigger to shoot.
         launch(gamepad1.rightBumperWasPressed());
 
-        limelight.rangeRumble(gamepad1,gamepad2,pinpoint.getV());
+        velocityArray = pinpoint.getV();
+
+        limelight.rangeRumble(gamepad1,gamepad2,velocityArray);
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("State", launchState);
-        telemetry.addData("FeederPower:", leftFeeder.getPower());
         telemetry.addData("motorSpeed", launcher1.getVelocity());
+        telemetry.addData("motorSpeed1", launcher.getVelocity());
+
         telemetry.addData("Feeder timer (should stop  when hits 0.10:", feederTimer.seconds());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
