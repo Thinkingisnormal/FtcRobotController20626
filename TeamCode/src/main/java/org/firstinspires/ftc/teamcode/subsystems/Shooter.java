@@ -19,7 +19,7 @@ public class Shooter extends SubsystemBase {
     public static double SHOOT_POWER = 0.9;
 
     //PIDF Mode
-    private double targetVelocity = 0.0;
+    private double targetVelocity = 5000;
 
     public static double kP = 300;
     public static double kI = 0;
@@ -34,7 +34,7 @@ public class Shooter extends SubsystemBase {
         power = p;
     }
 
-    public void spinUp(){
+    public void rawMode(){
         shooterMode = ShooterMode.RAW;
         power = SHOOT_POWER;
     }
@@ -42,6 +42,9 @@ public class Shooter extends SubsystemBase {
     public void stop(){
         shooterMode = ShooterMode.RAW;
         power = 0.0;
+    }
+
+    public void OFFMODE(){
     }
 
     public void setVelocity(double velocity){
@@ -55,6 +58,10 @@ public class Shooter extends SubsystemBase {
         kD = d;
         kF = f;
         flywheelPID.setPIDF(kP, kI, kD, kF);
+    }
+
+    public void setMode(ShooterMode shooterMode){
+        this.shooterMode = shooterMode;
     }
 
 
@@ -75,6 +82,9 @@ public class Shooter extends SubsystemBase {
 
                 robot.shooterLeftHood.set(output);
                 robot.shooterRightHood.set(output);
+                break;
+            case OFF:
+
                 break;
             default:
                 break;
