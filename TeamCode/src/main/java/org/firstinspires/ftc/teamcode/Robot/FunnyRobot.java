@@ -64,7 +64,6 @@ public class FunnyRobot {
     public void init(HardwareMap hwMap, Opmode mode, Telemetry t){
         this.hwMap = hwMap;
         this.t = t;
-        FunnyRobot.Opmode = mode;
 
         //Mecanum Wheels
         frontLeft  = new MotorEx(hwMap, "front_left_drive");
