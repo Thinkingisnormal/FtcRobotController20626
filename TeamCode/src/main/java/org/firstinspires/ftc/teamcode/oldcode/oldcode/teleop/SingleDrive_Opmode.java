@@ -43,6 +43,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.teamcode.mechanisms.RobotEyes;
 import org.firstinspires.ftc.teamcode.mechanisms.pinpoint;
@@ -56,7 +57,7 @@ import org.firstinspires.ftc.teamcode.mechanisms.pinpoint;
 */
 
 
-@TeleOp(name="Single Driver TeleOp", group="opmodes")
+@TeleOp(name="Singlee Driver TeleOp", group="opmodes")
 @Configurable
 public class SingleDrive_Opmode extends OpMode {
 
@@ -67,14 +68,15 @@ public class SingleDrive_Opmode extends OpMode {
 
     //for launcher encoders.
     public static double LAUNCHER_TARGET_VELOCITY = 600;
-    public static double LAUNCHER_MIN_VELOCITY = 1120;
-    public static double PIDFVALUE = 300;
+    public static double LAUNCHER_MIN_VELOCITY = 100;
+
+    public static double servoPosition = 0;
 
 
     // Declare OpMode members
 
     //timers
-    final double FEED_TIME_SECONDS = 0.2; //The feeder servos run this long when a shot is requested.
+    final double FEED_TIME_SECONDS = 1.0; //The feeder servos run this long when a shot is requested.
     final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
     private ElapsedTime runtime = new ElapsedTime();
     private ElapsedTime feederTimer = new ElapsedTime();
@@ -91,8 +93,8 @@ public class SingleDrive_Opmode extends OpMode {
     private DcMotor backRightDrive;
     private DcMotor outerIntake;
     private DcMotor innerIntake;
-    private CRServo leftFeeder ;
-    private CRServo rightFeeder;
+    private Servo leftStop ;
+    private Servo rightStop;
     private DcMotorEx launcher;
     private DcMotorEx launcher1;
 
@@ -124,8 +126,8 @@ public class SingleDrive_Opmode extends OpMode {
         backRightDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
         launcher = hardwareMap.get(DcMotorEx.class, "launcher");
         launcher1 = hardwareMap.get(DcMotorEx.class, "launcher1");
-        leftFeeder = hardwareMap.get(CRServo.class, "left_feeder");
-        rightFeeder = hardwareMap.get(CRServo.class, "right_feeder");
+        leftStop = hardwareMap.get(Servo.class, "left_feeder");
+        rightStop = hardwareMap.get(Servo.class, "right_feeder");
 
         innerIntake = hardwareMap.get(DcMotor.class,"inner_intake");
         outerIntake = hardwareMap.get(DcMotor.class,"outer_intake");
@@ -156,15 +158,13 @@ public class SingleDrive_Opmode extends OpMode {
         /*
          * set Feeders to an initial value to initialize the servo controller
          */
-        leftFeeder.setPower(STOP_SPEED);
-        rightFeeder.setPower(STOP_SPEED);
 
         //got this from starter bot code example
         launcher.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(7, 0, 0, 7));
         launcher1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(7, 0, 0, 7));
 
-        leftFeeder.setDirection(DcMotorSimple.Direction.REVERSE);
-        rightFeeder.setDirection(DcMotorSimple.Direction.FORWARD);
+        leftStop.setDirection(Servo.Direction.REVERSE);
+        rightStop.setDirection(Servo.Direction.FORWARD);
 
         // initialize IMU for Limelight.
         imu = hardwareMap.get(IMU.class, "imu");
@@ -230,6 +230,8 @@ public class SingleDrive_Opmode extends OpMode {
             backRightPower  /= max;
         }
 
+        leftStop.setPosition(servoPosition);
+        rightStop.setPosition(servoPosition);
         if(gamepad1.cross) {
             innerIntake.setPower(-1);
             outerIntake.setPower(-1);
@@ -243,8 +245,6 @@ public class SingleDrive_Opmode extends OpMode {
            } else if (gamepad1.circle) {
             launcher.setVelocity(0);
             launcher1.setVelocity(0);
-            leftFeeder.setPower(0);
-            rightFeeder.setPower(0);
             launchState = LaunchState.IDLE;
         }
 
@@ -263,9 +263,9 @@ public class SingleDrive_Opmode extends OpMode {
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
         telemetry.addData("State", launchState);
-        telemetry.addData("motorSpeed", launcher1.getVelocity());
         telemetry.addData("motorSpeed1", launcher.getVelocity());
-
+        telemetry.addData("leftservoposition", leftStop.getPosition());
+        telemetry.addData("rightservoposition",rightStop.getPosition());
         telemetry.addData("Feeder timer (should stop  when hits 0.10:", feederTimer.seconds());
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
@@ -285,23 +285,24 @@ public class SingleDrive_Opmode extends OpMode {
                 launcher1.setVelocity(LAUNCHER_TARGET_VELOCITY);
                 launcher.setVelocity(-LAUNCHER_TARGET_VELOCITY);
 
-                if (launcher1.getVelocity() >= LAUNCHER_MIN_VELOCITY &&
+                if (launcher.getVelocity() >= LAUNCHER_MIN_VELOCITY &&
                         launcherTimer.seconds() > TIME_BEFORE_LAUNCH) { //changed min to target
                         launchState = LaunchState.LAUNCH;
 
                 }
                 break;
             case LAUNCH:
-                leftFeeder.setPower(FULL_SPEED);
-                rightFeeder.setPower(FULL_SPEED);
+                leftStop.setPosition(1);
+                rightStop.setPosition(1);
                 feederTimer.reset(); //starts timer
                 launchState = LaunchState.LAUNCHING;
                 break;
             case LAUNCHING:
                 if (feederTimer.seconds() > FEED_TIME_SECONDS) {
                     launchState = LaunchState.IDLE;
-                    leftFeeder.setPower(STOP_SPEED);
-                    rightFeeder.setPower(STOP_SPEED);
+                    leftStop.setPosition(0);
+                    rightStop.setPosition(0);
+
                 }
                 break;
         }

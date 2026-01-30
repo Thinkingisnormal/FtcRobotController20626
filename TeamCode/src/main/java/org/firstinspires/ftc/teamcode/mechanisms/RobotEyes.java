@@ -65,7 +65,7 @@ public class RobotEyes {
    public double calcDistance (double ty) {
 
         // how many degrees back is your limelight rotated from perfectly vertical?
-        double limelightMountAngleDegrees = 0;
+        double limelightMountAngleDegrees = 15;
 
         // distance from the center of the Limelight lens to the floor
         double limelightLensHeightInches = 11.5;
