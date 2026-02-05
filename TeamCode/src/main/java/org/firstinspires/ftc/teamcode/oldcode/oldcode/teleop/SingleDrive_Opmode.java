@@ -67,16 +67,18 @@ public class SingleDrive_Opmode extends OpMode {
 
 
     //for launcher encoders.
-    public static double LAUNCHER_TARGET_VELOCITY = 600;
-    public static double LAUNCHER_MIN_VELOCITY = 100;
+    public static double LAUNCHER_TARGET_VELOCITY = 700;
+    //650 = 1320 rpm
+    //750 = 1500 rpm
+    public static double LAUNCHER_MIN_VELOCITY = 1100;
 
-    public static double servoPosition = 0;
+    public static double servoPosition = .95;
 
 
     // Declare OpMode members
 
     //timers
-    final double FEED_TIME_SECONDS = 1.0; //The feeder servos run this long when a shot is requested.
+    final double FEED_TIME_SECONDS = 0.4; //The feeder servos run this long when a shot is requested.
     final double TIME_BEFORE_LAUNCH = 1.0; //seconds before servos turn on to shoot when launcher hiits target velocity
     private ElapsedTime runtime = new ElapsedTime();
     private ElapsedTime feederTimer = new ElapsedTime();
@@ -133,9 +135,9 @@ public class SingleDrive_Opmode extends OpMode {
         outerIntake = hardwareMap.get(DcMotor.class,"outer_intake");
 
 
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
+        frontLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         backLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         backRightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         launcher.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -205,8 +207,8 @@ public class SingleDrive_Opmode extends OpMode {
         pinpoint.loop(gamepad1);
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
         double axial   =  -gamepad1.right_stick_x;  // Note: pushing stick forward gives negative value
-        double lateral =  gamepad1.left_stick_y;
-        double yaw     =  gamepad1.left_stick_x;
+        double lateral =  -gamepad1.left_stick_x;
+        double yaw     =  -gamepad1.left_stick_y;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -215,6 +217,8 @@ public class SingleDrive_Opmode extends OpMode {
         double backLeftPower   = axial - lateral + yaw;
         double backRightPower  = axial + lateral - yaw;
 
+        leftStop.setPosition(servoPosition);
+        rightStop.setPosition(servoPosition);
 
         double max;
         // Normalize the values so no wheel power exceeds 100%
@@ -230,8 +234,6 @@ public class SingleDrive_Opmode extends OpMode {
             backRightPower  /= max;
         }
 
-        leftStop.setPosition(servoPosition);
-        rightStop.setPosition(servoPosition);
         if(gamepad1.cross) {
             innerIntake.setPower(-1);
             outerIntake.setPower(-1);
@@ -240,8 +242,8 @@ public class SingleDrive_Opmode extends OpMode {
             outerIntake.setPower(0);
         }
         if(gamepad1.square) {
-            launcher.setVelocity(LAUNCHER_TARGET_VELOCITY);
-            launcher1.setVelocity(-LAUNCHER_TARGET_VELOCITY);
+            launcher.setVelocity(-LAUNCHER_TARGET_VELOCITY);
+            launcher1.setVelocity(LAUNCHER_TARGET_VELOCITY);
            } else if (gamepad1.circle) {
             launcher.setVelocity(0);
             launcher1.setVelocity(0);
@@ -292,17 +294,16 @@ public class SingleDrive_Opmode extends OpMode {
                 }
                 break;
             case LAUNCH:
-                leftStop.setPosition(1);
-                rightStop.setPosition(1);
                 feederTimer.reset(); //starts timer
                 launchState = LaunchState.LAUNCHING;
+                servoPosition = .45;
                 break;
             case LAUNCHING:
                 if (feederTimer.seconds() > FEED_TIME_SECONDS) {
-                    launchState = LaunchState.IDLE;
-                    leftStop.setPosition(0);
-                    rightStop.setPosition(0);
+                    servoPosition = .95;
 
+
+                    launchState = LaunchState.IDLE;
                 }
                 break;
         }
